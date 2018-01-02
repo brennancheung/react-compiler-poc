@@ -1,0 +1,10 @@
+build/*
+output/*
+dist/*
+._*
+.DS_Store
+.idea
+node_modules/
+npm-debug.log
+.*.swp
+.*.swo
