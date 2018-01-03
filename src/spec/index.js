@@ -1,5 +1,9 @@
+import OpenStack from '../../plugins/pf9-plugin-openstack'
+
 const spec = {
-  loggers: ['hello world']
+  plugins: [
+    OpenStack
+  ]
 }
 
 export default spec
