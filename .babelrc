@@ -5,8 +5,9 @@
     "react"
   ],
   "plugins": [
+    "transform-pipeline",
     "transform-decorators-legacy",
-    "react-hot-loader/babel"
+    "react-hot-loader/babel",
   ],
   "env": {
     "test": {

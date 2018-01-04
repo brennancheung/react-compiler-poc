@@ -1,27 +1,20 @@
-// import spec from '../spec'
+import fs from 'fs'
 import copydir from 'copy-dir'
 import path from 'path'
 import webpack from 'webpack'
 
-import spec from '../spec'
+import { camelize } from './bootstrap/app/util/fp'
 
-const parseSpec = spec => {
-  let commands = []
-
-  const { plugins } = spec
-  plugins.forEach(plugin => {
-    plugin.routes.forEach(route => {
-      commands.push({
-        type: 'ADD_ROUTE',
-        payload: {
-          path: route.path,
-          component: route.component,
-        },
-      })
-    })
-  })
-  console.log(JSON.stringify(spec, null, 4))
-  return commands
+// Generate the plugins.js file dynamically based on ENV.PLUGINS
+const pluginsTemplate = plugins => {
+  const importsList = plugins.map(plugin => `import ${camelize(plugin)} from '../../plugins/${plugin}'\n`).join('')
+  const pluginsList = `const plugins = [${plugins.map(camelize).join(', ')}]`
+  const template =
+`${importsList}
+${pluginsList}
+export default plugins
+`
+  return template
 }
 
 async function build () {
@@ -33,12 +26,14 @@ async function build () {
   const outputDest = path.resolve(__dirname, '../../output')
   copydir.sync(source, outputDest)
 
-  // 2. Get the spec.
-  console.log(`Loading spec.`)
+  // 2. Get the plugin list.
+  console.log(`Loading plugin list.`)
+  const plugins = process.env.PLUGINS.split(',')
 
-  // 3. Output new code from the spec into 'output' folder.
-  const transformations = parseSpec(spec)
-  console.log(JSON.stringify(transformations, null, 4))
+  // 3. Generate JS code to import the plugins
+  console.log('Generating plugins.js')
+  const pluginsJS = pluginsTemplate(plugins)
+  fs.writeFileSync(path.resolve(__dirname, '../../output/app/plugins.js'), pluginsJS)
 
   // 4. Compile the app.
   const webpackConfig = require('../../output/webpack.config.js')
@@ -50,9 +45,13 @@ async function build () {
       console.error(err)
     }
 
+    // Show the webpack status
     console.log(stats.toString({
-      chunks: false,
-      colors: true
+      colors: true,
+      modules: false,
+      version: false,
+      // hash: false,
+      // timings: false,
     }))
 
     // 5. Copy the static folder into the 'build' folder
